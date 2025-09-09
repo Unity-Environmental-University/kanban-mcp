@@ -1,5 +1,13 @@
 # Kanban MCP (SQLite)
 
+> Part of the LXD MCP Suite — a cohesive set of MCP servers for learning experience design (coaching, Kanban, stories, and optional LLM adapters).
+
+# What it is
+A minimal Kanban MCP server backed by SQLite. Designed for small projects and automation via MCP tools. Includes a pragmatic blocked workflow (requires who/why to enter `blocked`).
+
+# Why it helps
+Simple, scriptable board you can run locally or embed in automations. Events enable integrations without heavy infra.
+
 Standalone MCP stdio server for a Kanban board backed by SQLite.
 - Default agile columns seeded: backlog, current_sprint, in_progress, blocked, done, archived
 - Tools: kanban_handshake, board_info, add_column, add_card, move_card, update_card, list_cards, search_cards, sync_from_story (optional)
