@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Usage: kanban-board-info <user_key>
+USER_KEY="${1:-}"; if [[ -z "$USER_KEY" ]]; then echo "Usage: kanban-board-info <user_key>" >&2; exit 1; fi
+PAYLOAD=$(python3 -c '
+import json,sys
+u=sys.argv[1]
+print(json.dumps({
+  "jsonrpc":"2.0","id":2,"method":"tools/call",
+  "params":{"name":"board_info","arguments":{ "user_key":u }}
+}))
+' "$USER_KEY")
+exec "$(dirname "$0")/kanban-mcp-call" "$PAYLOAD"

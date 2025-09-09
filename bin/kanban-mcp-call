@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Usage: kanban-mcp-call '<jsonrpc-payload>'
+# Example: kanban-mcp-call '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"board_info","arguments":{"user_key":"demo"}}}'
+PAYLOAD="${1:-}"
+if [[ -z "$PAYLOAD" ]]; then
+  echo "Usage: kanban-mcp-call '<jsonrpc-payload>'" >&2
+  exit 1
+fi
+python3 -c '
+import sys, json, subprocess, os
+payload = sys.argv[1]
+reqs = [ {"jsonrpc":"2.0","id":1,"method":"initialize"}, json.loads(payload) ]
+p = subprocess.Popen(["python3","mcp_server.py"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, env=dict(os.environ))
+for r in reqs:
+    p.stdin.write(json.dumps(r)+"\n"); p.stdin.flush()
+p.stdin.close()
+outs = p.stdout.read().strip().splitlines()
+print(outs[-1] if outs else "")
+' "$PAYLOAD"

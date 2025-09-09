@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Usage: kanban-register-listener <user_key> <event> <kind:http|command> <target> [filter_json]
+USER_KEY="${1:-}"; EVENT="${2:-}"; KIND="${3:-}"; TARGET="${4:-}"; FILTER="${5:-{}}"
+if [[ -z "$USER_KEY" || -z "$EVENT" || -z "$KIND" || -z "$TARGET" ]]; then
+  echo "Usage: kanban-register-listener <user_key> <event> <kind:http|command> <target> [filter_json]" >&2; exit 1; fi
+PAYLOAD=$(python3 -c '
+import json,sys
+u,e,k,t,f=sys.argv[1:6]
+try:
+  fj=json.loads(f)
+except Exception:
+  fj={}
+print(json.dumps({
+  "jsonrpc":"2.0","id":2,"method":"tools/call",
+  "params":{"name":"register_listener","arguments":{ "user_key":u, "event":e, "kind":k, "target":t, "filter":fj }}
+}))
+' "$USER_KEY" "$EVENT" "$KIND" "$TARGET" "$FILTER")
+exec "$(dirname "$0")/kanban-mcp-call" "$PAYLOAD"

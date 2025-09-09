@@ -1,0 +1,9 @@
+[Unit]
+Description=Kanban MCP Server (user)
+
+[Service]
+ExecStart=/usr/bin/env bash -lc 'exec kanban-mcp'
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

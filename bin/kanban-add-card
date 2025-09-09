@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Usage: kanban-add-card <user_key> <title> <column> [description]
+USER_KEY="${1:-}"; TITLE="${2:-}"; COLUMN="${3:-}"; DESC="${4:-}";
+if [[ -z "$USER_KEY" || -z "$TITLE" || -z "$COLUMN" ]]; then
+  echo "Usage: kanban-add-card <user_key> <title> <column> [description]" >&2; exit 1; fi
+PAYLOAD=$(python3 -c '
+import json,sys
+u,t,c,d=sys.argv[1:5]
+print(json.dumps({
+  "jsonrpc":"2.0","id":2,"method":"tools/call",
+  "params":{"name":"add_card","arguments":{ "user_key":u, "title":t, "column":c, "description":d }}
+}))
+' "$USER_KEY" "$TITLE" "$COLUMN" "${DESC:-}")
+exec "$(dirname "$0")/kanban-mcp-call" "$PAYLOAD"

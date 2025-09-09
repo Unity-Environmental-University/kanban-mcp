@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+USER_KEY="${1:-demo-user}"
+DB_PATH="${KANBAN_DB_PATH:-$(pwd)/kanban.db}"
+export KANBAN_DB_PATH="$DB_PATH"
+run_call() {
+  local name="$1"; shift
+  local args_json="$1"
+  python3 - << PY
+import sys,json,subprocess,os
+reqs=[{"jsonrpc":"2.0","id":1,"method":"initialize"},{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"$name","arguments":$args_json}}]
+p=subprocess.Popen(["python3","mcp_server.py"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True,env=dict(os.environ))
+for r in reqs:
+  p.stdin.write(json.dumps(r)+"\n")
+  p.stdin.flush()
+p.stdin.close()
+outs=p.stdout.read().strip().splitlines()
+print(outs[-1])
+PY
+}
+# Handshake
+run_call kanban_handshake "{\"user_key\":\"$USER_KEY\",\"name\":\"demo\"}"
+# Add card
+RESP=$(run_call add_card "{\"user_key\":\"$USER_KEY\",\"title\":\"Demo Card\",\"column\":\"backlog\"}")
+CARD_ID=$(python3 - << 'PY'
+import json,sys
+last=json.loads(sys.stdin.read())
+text=last.get('result',{}).get('content',[{}])[0].get('text','{}')
+print(json.loads(text).get('id',''))
+PY <<< "$RESP")
+# Move card
+run_call move_card "{\"user_key\":\"$USER_KEY\",\"card_id\":\"$CARD_ID\",\"target_column\":\"in_progress\"}"
+# Board info
+run_call board_info "{\"user_key\":\"$USER_KEY\"}"

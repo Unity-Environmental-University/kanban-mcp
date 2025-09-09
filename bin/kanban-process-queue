@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Usage: kanban-process-queue <user_key> [board_key]
+USER_KEY="${1:-}"; BOARD_KEY="${2:-}"
+if [[ -z "$USER_KEY" ]]; then echo "Usage: kanban-process-queue <user_key> [board_key]" >&2; exit 1; fi
+PAYLOAD=$(python3 -c '
+import json,sys
+u=sys.argv[1]
+b=(sys.argv[2] if len(sys.argv)>2 else None)
+args={"user_key":u}
+if b: args["board_key"]=b
+print(json.dumps({
+  "jsonrpc":"2.0","id":2,"method":"tools/call",
+  "params":{"name":"process_queue","arguments": args }
+}))
+' "$USER_KEY" "${BOARD_KEY:-}")
+exec "$(dirname "$0")/kanban-mcp-call" "$PAYLOAD"

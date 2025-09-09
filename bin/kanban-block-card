@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Usage: kanban-block-card <user_key> <card_id> [blocked_by] [blocked_reason]
+
+USER_KEY="${1:-}"
+CARD_ID="${2:-}"
+BLOCKED_BY="${3:-}"
+BLOCKED_REASON="${4:-}"
+
+if [[ -z "$USER_KEY" || -z "$CARD_ID" ]]; then
+  echo "Usage: kanban-block-card <user_key> <card_id> [blocked_by] [blocked_reason]" >&2
+  exit 1
+fi
+
+if [[ -z "${BLOCKED_BY}" ]]; then
+  read -rp "Blocked by (user): " BLOCKED_BY
+fi
+if [[ -z "${BLOCKED_REASON}" ]]; then
+  read -rp "Blocked reason: " BLOCKED_REASON
+fi
+
+if [[ -z "$BLOCKED_BY" || -z "$BLOCKED_REASON" ]]; then
+  echo "Error: blocked_by and blocked_reason are required." >&2
+  exit 1
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CALL_BIN="${SCRIPT_DIR}/kanban-mcp-call"
+
+PAYLOAD=$(python3 - << PY
+import json,sys,os
+args={
+  "user_key": os.environ["USER_KEY"],
+  "card_id": os.environ["CARD_ID"],
+  "target_column": "blocked",
+  "blocked_by": os.environ["BLOCKED_BY"],
+  "blocked_reason": os.environ["BLOCKED_REASON"],
+}
+print(json.dumps({
+  "jsonrpc":"2.0","id":2,"method":"tools/call",
+  "params":{"name":"move_card","arguments":args}
+}))
+PY
+)
+
+USER_KEY="$USER_KEY" CARD_ID="$CARD_ID" BLOCKED_BY="$BLOCKED_BY" BLOCKED_REASON="$BLOCKED_REASON" \
+  exec "$CALL_BIN" "$PAYLOAD"
+
