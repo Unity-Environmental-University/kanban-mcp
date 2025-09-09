@@ -1,3 +1,4 @@
+
 # Kanban MCP (SQLite)
 
 > Part of the LXD MCP Suite — a cohesive set of MCP servers for learning experience design (coaching, Kanban, stories, and optional LLM adapters).
@@ -73,3 +74,5 @@ Claude/Code MCP config example:
 
 ### Helper script
 - `bin/kanban-block-card`: prompts or accepts args to move a card to `blocked` with required metadata.
+
+> Internal Use Only — not licensed for external distribution or hosting.
