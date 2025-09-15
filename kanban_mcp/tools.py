@@ -1,6 +1,7 @@
 import json, os
 from typing import Any, Dict, List
 from .db import KanbanDB
+from .trello_sync import sync_from_trello
 
 class Tools:
     def __init__(self, db: KanbanDB):
@@ -17,6 +18,7 @@ class Tools:
             {"name": "list_cards", "description": "List cards (optional column)", "inputSchema": {"type": "object", "properties": {"user_key": {"type": "string"}, "board_key": {"type": "string"}, "column": {"type": "string"}}, "required": ["user_key"]}},
             {"name": "search_cards", "description": "Search cards by text", "inputSchema": {"type": "object", "properties": {"user_key": {"type": "string"}, "board_key": {"type": "string"}, "query": {"type": "string"}}, "required": ["user_key","query"]}},
             {"name": "sync_from_story", "description": "Optional file-based sync from story files", "inputSchema": {"type": "object", "properties": {"user_key": {"type": "string"}, "board_key": {"type": "string"}}, "required": ["user_key"]}},
+            {"name": "sync_from_trello", "description": "Sync cards from Trello board (requires TRELLO_SYNC_ENABLE)", "inputSchema": {"type": "object", "properties": {"user_key": {"type": "string"}, "board_key": {"type": "string"}, "trello_board_name": {"type": "string"}}, "required": ["user_key", "trello_board_name"]}},
             # Event bus tools
             {"name": "register_listener", "description": "Register event listener (command or http)", "inputSchema": {"type": "object", "properties": {"user_key": {"type": "string"}, "board_key": {"type": "string"}, "event": {"type": "string"}, "kind": {"type": "string"}, "target": {"type": "string"}, "filter": {"type": "object"}}, "required": ["user_key","event","kind","target"]}},
             {"name": "list_listeners", "description": "List listeners for the board", "inputSchema": {"type": "object", "properties": {"user_key": {"type": "string"}, "board_key": {"type": "string"}}, "required": ["user_key"]}},
@@ -132,6 +134,11 @@ class Tools:
                 return self._res_text("no story files found")
             except Exception as e:
                 return self._res_text(f"sync error: {e}")
+        if name == 'sync_from_trello':
+            board = self.db.ensure_board(args.get('user_key',''), args.get('board_key') or 'default')
+            trello_board_name = args.get('trello_board_name', '')
+            result = sync_from_trello(self.db, board['id'], trello_board_name)
+            return self._res_text(json.dumps(result, ensure_ascii=False))
         # Event bus tools
         if name == 'register_listener':
             board = self.db.ensure_board(args.get('user_key',''), args.get('board_key') or 'default')
